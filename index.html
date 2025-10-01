@@ -1,44 +1,223 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Simulador de Dados RPG</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gerador de Senhas — Simples</title>
+  <style>
+    :root{--bg:#0f1724;--card:#091029;--accent:#06b6d4;--muted:#94a3b8;--glass:rgba(255,255,255,0.04)}
+    *{box-sizing:border-box}
+    body{font-family:Inter, system-ui, Roboto, Arial, sans-serif;background:linear-gradient(180deg,#071022 0%, #0b1220 100%);color:#e6eef6;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px}
+    .card{width:100%;max-width:760px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:24px;box-shadow:0 6px 30px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03)}
+    h1{font-size:20px;margin:0 0 8px}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
+    .row{display:flex;gap:16px;margin-top:18px}
+    .col{flex:1}
+    .panel{background:var(--card);padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.02)}
+    label{font-size:13px;color:var(--muted);display:block;margin-bottom:8px}
+    input[type=range]{width:100%}
+    .controls{display:flex;gap:8px;align-items:center}
+    .btn{background:var(--accent);color:#04121a;padding:8px 12px;border-radius:8px;border:none;cursor:pointer;font-weight:600}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+    .output{font-family:monospace;background:var(--glass);padding:12px;border-radius:8px;margin-top:12px;word-break:break-all;display:flex;align-items:center;justify-content:space-between}
+    .strength{height:8px;border-radius:6px;background:rgba(255,255,255,0.06);overflow:hidden;margin-top:10px}
+    .strength > i{display:block;height:100%;width:0%;background:linear-gradient(90deg,#ff7a18,#ffb36b)}
+    .small{font-size:12px;color:var(--muted)}
+    .options{display:flex;flex-wrap:wrap;gap:8px}
+    .option{display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;background:rgba(255,255,255,0.015);border:1px solid rgba(255,255,255,0.02)}
+    .footer{margin-top:18px;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;align-items:center}
+    .copy-success{background:linear-gradient(90deg,#22c55e,#86efac);color:#042018;padding:8px 10px;border-radius:8px;font-weight:700}
+    @media (max-width:720px){.row{flex-direction:column}}
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🎲 Simulador de Dados RPG 🎲</h1>
-    
-    <div class="controls">
-      <label for="dice">Escolha o dado:</label>
-      <select id="dice">
-        <option value="4">d4</option>
-        <option value="6" selected>d6</option>
-        <option value="8">d8</option>
-        <option value="10">d10</option>
-        <option value="12">d12</option>
-        <option value="20">d20</option>
-        <option value="100">d100</option>
-      </select>
+  <main class="card" role="main">
+    <header>
+      <h1>Gerador de Senhas</h1>
+      <p class="lead">Gerador simples e seguro. Escolha comprimento e tipos de caracteres, clique em Gerar.</p>
+    </header>
 
-      <label for="quantity">Quantidade:</label>
-      <input type="number" id="quantity" value="1" min="1" max="100">
+    <section class="row" aria-label="gerador">
+      <div class="col panel">
+        <label for="length">Comprimento: <strong id="len-val">16</strong></label>
+        <input id="length" type="range" min="6" max="64" value="16" />
 
-      <button id="rollBtn">Rolar</button>
-    </div>
+        <div style="margin-top:12px">
+          <label class="small">Opções</label>
+          <div class="options" role="group" aria-label="opções de caracteres">
+            <label class="option"><input type="checkbox" id="lower" checked /> a–z</label>
+            <label class="option"><input type="checkbox" id="upper" checked /> A–Z</label>
+            <label class="option"><input type="checkbox" id="numbers" checked /> 0–9</label>
+            <label class="option"><input type="checkbox" id="symbols" /> !@#$%</label>
+          </div>
+        </div>
 
-    <div class="dice-area">
-      <div id="results"></div>
-      <p id="total">Total: -</p>
-    </div>
+        <div style="margin-top:12px">
+          <label class="small">Geração</label>
+          <div class="controls">
+            <button id="generate" class="btn">Gerar</button>
+            <button id="copy" class="btn ghost">Copiar</button>
+            <button id="shuffle" class="btn ghost">Misturar</button>
+          </div>
+        </div>
 
-    <div class="history">
-      <h2>Histórico</h2>
-      <ul id="history"></ul>
-    </div>
-  </div>
+        <div class="output" id="output" tabindex="0" aria-live="polite">MinhaSenhaSegura123!</div>
 
-  <script src="script.js" defer></script>
+        <div class="strength" title="Força da senha"><i id="bar"></i></div>
+        <div class="footer"><span class="small">Força: <strong id="strength-text">fraca</strong></span><span class="small">Feito com ❤️</span></div>
+      </div>
+
+      <aside class="col panel" style="max-width:320px">
+        <h2 style="margin:0 0 8px">Sobre</h2>
+        <p class="small" style="margin-bottom:12px">Este gerador cria senhas aleatórias no navegador — nenhuma informação sai do seu computador.</p>
+
+        <h3 style="margin:0 0 8px">Dicas</h3>
+        <ul class="small" style="margin:0 0 12px;padding-left:18px">
+          <li>Use ao menos 12 caracteres para contas importantes.</li>
+          <li>Ative números e símbolos para mais segurança.</li>
+          <li>Guarde senhas longas em um gerenciador de senhas.</li>
+        </ul>
+
+        <div style="margin-top:8px">
+          <label class="small">Gerar várias</label>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <input id="count" type="number" value="4" min="1" max="20" style="width:70px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit" />
+            <button id="multi" class="btn ghost">Gerar</button>
+          </div>
+          <div id="multi-list" style="margin-top:10px"></div>
+        </div>
+      </aside>
+    </section>
+
+    <footer style="margin-top:14px;color:var(--muted);font-size:12px">Código aberto • Pode publicar no GitHub Pages</footer>
+  </main>
+
+  <script>
+
+    const lengthInput = document.getElementById('length');
+    const lenVal = document.getElementById('len-val');
+    const lower = document.getElementById('lower');
+    const upper = document.getElementById('upper');
+    const numbers = document.getElementById('numbers');
+    const symbols = document.getElementById('symbols');
+    const generateBtn = document.getElementById('generate');
+    const copyBtn = document.getElementById('copy');
+    const output = document.getElementById('output');
+    const bar = document.getElementById('bar');
+    const strengthText = document.getElementById('strength-text');
+    const shuffleBtn = document.getElementById('shuffle');
+    const countInput = document.getElementById('count');
+    const multiBtn = document.getElementById('multi');
+    const multiList = document.getElementById('multi-list');
+
+    // Pools
+    const POOLS = {
+      lower: 'abcdefghijklmnopqrstuvwxyz',
+      upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+      numbers: '0123456789',
+      symbols: '!@#$%^&*()-_=+[]{};:,.<>?'
+    };
+
+    function generatePassword(len){
+      let pool = '';
+      if(lower.checked) pool += POOLS.lower;
+      if(upper.checked) pool += POOLS.upper;
+      if(numbers.checked) pool += POOLS.numbers;
+      if(symbols.checked) pool += POOLS.symbols;
+      if(!pool) return '';
+
+
+      const arr = new Uint32Array(len);
+      window.crypto.getRandomValues(arr);
+      let out = '';
+      for(let i=0;i<len;i++){
+        out += pool[arr[i] % pool.length];
+      }
+      return out;
+    }
+
+    function evaluateStrength(pw){
+      let score = 0;
+      if(pw.length >= 8) score += 1;
+      if(pw.length >= 12) score += 1;
+      if(/[a-z]/.test(pw)) score += 1;
+      if(/[A-Z]/.test(pw)) score += 1;
+      if(/[0-9]/.test(pw)) score += 1;
+      if(/[^A-Za-z0-9]/.test(pw)) score += 1;
+      return score; // 0..6
+    }
+
+    function updateStrength(pw){
+      const s = evaluateStrength(pw);
+      const percent = Math.round((s/6)*100);
+      bar.style.width = percent + '%';
+      let label = 'fraca';
+      if(s <= 2) label = 'fraca';
+      else if(s <= 4) label = 'média';
+      else label = 'forte';
+      strengthText.textContent = label;
+    }
+
+
+    lengthInput.addEventListener('input', ()=>{lenVal.textContent = lengthInput.value});
+
+    generateBtn.addEventListener('click', ()=>{
+      const len = Number(lengthInput.value);
+      const pw = generatePassword(len) || 'Selecione ao menos 1 tipo de caractere';
+      output.textContent = pw;
+      updateStrength(pw);
+    });
+
+    copyBtn.addEventListener('click', async ()=>{
+      try{
+        await navigator.clipboard.writeText(output.textContent);
+
+        const prev = copyBtn.textContent;
+        copyBtn.textContent = 'Copiado!';
+        copyBtn.classList.remove('ghost');
+        copyBtn.style.background = '';
+        setTimeout(()=>{copyBtn.textContent = prev; copyBtn.classList.add('ghost'); copyBtn.style.background = ''},1500);
+      }catch(e){
+        alert('Não foi possível copiar.');
+      }
+    });
+
+    shuffleBtn.addEventListener('click', ()=>{
+      const cur = output.textContent;
+      if(!cur) return;
+
+      const arr = Array.from(cur);
+      for(let i=arr.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [arr[i],arr[j]] = [arr[j],arr[i]];
+      }
+      output.textContent = arr.join('');
+      updateStrength(output.textContent);
+    });
+
+    multiBtn.addEventListener('click', ()=>{
+      const n = Number(countInput.value) || 1;
+      const len = Number(lengthInput.value);
+      multiList.innerHTML = '';
+      for(let i=0;i<n;i++){
+        const p = generatePassword(len);
+        const el = document.createElement('div');
+        el.textContent = p;
+        el.style.padding = '6px 8px';
+        el.style.borderRadius = '6px';
+        el.style.marginBottom = '6px';
+        el.style.background = 'rgba(255,255,255,0.02)';
+        el.style.fontFamily = 'monospace';
+        el.style.wordBreak = 'break-word';
+        multiList.appendChild(el);
+      }
+    });
+
+    (function init(){
+      const p = generatePassword(Number(lengthInput.value));
+      output.textContent = p;
+      updateStrength(p);
+    })();
+  </script>
 </body>
 </html>
